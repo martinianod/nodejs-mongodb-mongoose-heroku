@@ -1,5 +1,6 @@
 const User = require('../models/user');
 const Ticket = require('../models/ticket');
+const Localidad = require('../models/localidad');
 
 // Create user
 exports.create = (req, res) => {
@@ -30,9 +31,7 @@ exports.create = (req, res) => {
 
 // Retrieve all tickets from the database.
 exports.findAll = (req, res) => {
-    const name = req.query.name;
-    var condition = name ? { name: { $regex: new RegExp(name), $options: "i" } } : {};
-    console.log("antes de find")
+
     Ticket.find({}).then(data => {
         console.log(data)
         res.send(data);
@@ -44,6 +43,214 @@ exports.findAll = (req, res) => {
             });
         });
 };
+
+// quien atiende mas tickets
+exports.quienAtiendeMasTickets = (req, res) => {
+
+    Ticket.aggregate([
+        { $unwind: "$empleado_asignado" },
+        { $group: { _id: "$empleado_asignado.nro_empleado", nro_empleado: { "$first": "$empleado_asignado.nro_empleado" }, nombre: { "$first": "$empleado_asignado.nombre" }, apellido: { "$first": "$empleado_asignado.apellido" }, tickets_atendidos: { $sum: 1 } } },
+        { $group: { _id: "$tickets_atendidos", empleados_con_mas_tickets_atendidos: { $push: { nro_empleado: "$nro_empleado", tickets_atendidos: "$tickets_atendidos" } } } },
+        { $sort: { _id: -1 } },
+        { $limit: 1 },
+        { $unwind: "$empleados_con_mas_tickets_atendidos" },
+        { $project: { _id: 0 } }
+    ]).then(data => {
+        console.log(data)
+        res.send(data);
+    })
+        .catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while retrieving users."
+            });
+        });
+};
+
+// quien genera mas tickets
+exports.quienGeneraMasTickets = (req, res) => {
+
+    Ticket.aggregate([
+        { $group: { _id: "$cliente.nro_cliente", nombre: { "$first": "$cliente.nombre" }, apellido: { "$first": "$cliente.apellido" }, dni: { "$first": "$cliente.dni" }, cant_tickets_generados: { $sum: 1 } } },
+        { $group: { _id: "$cant_tickets_generados", clientes_con_mas_tickets_generados: { $push: { nro_cliente: "$_id", nombre: "$nombre", apellido: "$apellido", dni: "$dni", cant_tickets_generados: "$cant_tickets_generados" } } } },
+        { $sort: { _id: -1 } },
+        { $limit: 1 },
+        { $unwind: "$clientes_con_mas_tickets_generados" },
+        { $project: { _id: 0 } }
+    ]).then(data => {
+        console.log(data)
+        res.send(data);
+    })
+        .catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while retrieving users."
+            });
+        });
+};
+
+
+// quien genera mas tickets
+exports.quienTicketSinResolver = (req, res) => {
+
+    Ticket.find({ estado_actual: { $ne: "finalizado" } }).then(data => {
+        console.log(data)
+        res.send(data);
+    })
+        .catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while retrieving users."
+            });
+        });
+};
+
+// que desperfecto ocurre
+exports.queDesperfectoOcurre = (req, res) => {
+
+    Ticket.aggregate([
+        { $match: { motivo: { $eq: "desperfecto" } } },
+        { $project: { _id: 0, nro_ticket: 1, motivo: 1, descripcion: 1 } }
+    ]).then(data => {
+        console.log(data)
+        res.send(data);
+    })
+        .catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while retrieving users."
+            });
+        });
+};
+
+
+// cada cuanto ocurre un desperfecto
+exports.cadaCuantoOcurreUnDesperfecto = (req, res) => {
+
+    Ticket.aggregate([
+        { $match: { motivo: { $eq: "desperfecto" } } },
+        { $project: { _id: 0, nro_ticket: 1, motivo: 1, fecha_generado: 1 } },
+        { $sort: { fecha_generado: 1 } }
+    ]).then(data => {
+        console.log(data)
+        res.send(data);
+    })
+        .catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while retrieving users."
+            });
+        });
+};
+
+//desperfectos por zona avellaneda
+exports.desperfectoPorZonaAvellaneda = (req, res) => {
+
+    Ticket.aggregate([
+        { $match: { motivo: { $eq: "desperfecto" } } },
+        { $project: { _id: 0, nro_ticket: 1, motivo: 1, fecha_generado: 1 } },
+        { $sort: { fecha_generado: 1 } }
+    ]).then(data => {
+        console.log(data)
+        res.send(data);
+    })
+        .catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while retrieving users."
+            });
+        });
+};
+
+//desperfectos por zona flores
+exports.desperfectoPorZonaFlores = (req, res) => {
+
+    Localidad.findOne({ localidad: "flores" }).then(localidad => {
+        Ticket.find({ "cliente.direccion.geometry": { $geoWithin: { $geometry: localidad.geometry } } }).then(data => {
+            console.log(data)
+            res.send(data);
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while retrieving users."
+            });
+        });
+    }).catch(err => {
+        res.status(500).send({
+            message:
+                err.message || "Some error occurred while retrieving users."
+        });
+    });
+};
+
+
+//desperfectos por zona avellaneda
+exports.desperfectoPorZonaAvellaneda = (req, res) => {
+
+    Localidad.findOne({ localidad: "avellaneda" }).then(localidad => {
+        Ticket.find({ "cliente.direccion.geometry": { $geoWithin: { $geometry: localidad.geometry } } }).then(data => {
+            console.log(data)
+            res.send(data);
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while retrieving users."
+            });
+        });
+    }).catch(err => {
+        res.status(500).send({
+            message:
+                err.message || "Some error occurred while retrieving users."
+        });
+    });
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Find a single user with an id
 exports.findOne = (req, res) => {
