@@ -1,6 +1,7 @@
 const User = require('../models/user');
 const Ticket = require('../models/ticket');
 const Localidad = require('../models/localidad');
+const Sucursal = require('../models/sucursal');
 
 // Create user
 exports.create = (req, res) => {
@@ -205,6 +206,95 @@ exports.desperfectoPorZonaAvellaneda = (req, res) => {
     });
 };
 
+exports.clientesCercanosZonaAvellaneda = (req, res) => {
+
+    Sucursal.findOne({ sucursal: "Avellaneda Norte" }, { _id: 0, geometry: 1 }).then(sucursal => {
+        Ticket.aggregate([
+            {
+                $geoNear: {
+                    near: { type: sucursal.geometry.type, coordinates: sucursal.geometry.coordinates },
+                    distanceField: "dist.calculated",
+                    maxDistance: 7000,
+                    includeLocs: "cliente.direccion.geometry",
+                    spherical: true
+                }
+            }
+        ]).then(data => {
+            console.log(data)
+            res.send(data);
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while retrieving users."
+            });
+        });
+    }).catch(err => {
+        res.status(500).send({
+            message:
+                err.message || "Some error occurred while retrieving users."
+        });
+    });
+
+}
+
+exports.clientesCercanosZonaFlores = (req, res) => {
+
+    Sucursal.findOne({ sucursal: "Flores 1" }, { _id: 0, geometry: 1 }).then(sucursal => {
+        Ticket.aggregate([
+            {
+                $geoNear: {
+                    near: { type: sucursal.geometry.type, coordinates: sucursal.geometry.coordinates },
+                    distanceField: "dist.calculated",
+                    maxDistance: 8000,
+                    includeLocs: "cliente.direccion.geometry",
+                    spherical: true
+                }
+            }
+        ]).then(data => {
+            console.log(data)
+            res.send(data);
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while retrieving users."
+            });
+        });
+    }).catch(err => {
+        res.status(500).send({
+            message:
+                err.message || "Some error occurred while retrieving users."
+        });
+    });
+
+}
+/*exports.clientesCercanosZonaFlores = (req, res) => {
+
+    Sucursal.findOne({ sucursal: "Flores 1" }, { _id: 0, geometry: 1 }).then(sucursal => {
+        Ticket.find({
+            "cliente.direccion.geometry":
+            {
+                $near: {
+                    $geometry: { type: sucursal.geometry.type, coordinates: sucursal.geometry.coordinates },
+                    $maxDistance: 12000
+                }
+            }
+        })  .then(data => {
+            console.log(data)
+            res.send(data);
+        }).catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while retrieving users."
+            });
+        });
+    }).catch(err => {
+        res.status(500).send({
+            message:
+                err.message || "Some error occurred while retrieving users."
+        });
+    });
+
+}*/
 
 
 

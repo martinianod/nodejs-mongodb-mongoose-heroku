@@ -11,6 +11,8 @@ router.get('/que-desperfecto-ocurre', TicketController.queDesperfectoOcurre);
 router.get('/cada-cuanto-ocurre-desperfecto', TicketController.cadaCuantoOcurreUnDesperfecto);
 router.get('/desperfectos-por-zona-avellaneda', TicketController.desperfectoPorZonaAvellaneda);
 router.get('/desperfectos-por-zona-flores', TicketController.desperfectoPorZonaFlores);
+router.get('/clientes-cercanos-zona-flores', TicketController.clientesCercanosZonaFlores);
+router.get('/clientes-cercanos-zona-avellaneda', TicketController.clientesCercanosZonaAvellaneda);
 
 //router.post('/', TicketController.create)
 //router.put('/:id', TicketController.update);
