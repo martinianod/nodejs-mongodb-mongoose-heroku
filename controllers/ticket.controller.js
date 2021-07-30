@@ -245,7 +245,7 @@ exports.clientesCercanosZonaFlores = (req, res) => {
                 $geoNear: {
                     near: { type: sucursal.geometry.type, coordinates: sucursal.geometry.coordinates },
                     distanceField: "dist.calculated",
-                    maxDistance: 8000,
+                    maxDistance: 12000,
                     includeLocs: "cliente.direccion.geometry",
                     spherical: true
                 }
