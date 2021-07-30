@@ -206,6 +206,7 @@ exports.desperfectoPorZonaAvellaneda = (req, res) => {
     });
 };
 
+//clientes cercanos zona avellaneda
 exports.clientesCercanosZonaAvellaneda = (req, res) => {
 
     Sucursal.findOne({ sucursal: "Avellaneda Norte" }, { _id: 0, geometry: 1 }).then(sucursal => {
@@ -237,6 +238,7 @@ exports.clientesCercanosZonaAvellaneda = (req, res) => {
 
 }
 
+//clientes cercanos zona flores
 exports.clientesCercanosZonaFlores = (req, res) => {
 
     Sucursal.findOne({ sucursal: "Flores 1" }, { _id: 0, geometry: 1 }).then(sucursal => {
@@ -295,6 +297,61 @@ exports.clientesCercanosZonaFlores = (req, res) => {
     });
 
 }*/
+
+//cliente que es ademas empleado
+exports.clienteEmpleado = (req, res) => {
+
+    Ticket.aggregate([
+        {
+          $lookup:
+            {
+              from: "empleados",
+              let: { cliente_dni: "$cliente.dni" },
+               pipeline: [
+                  { $match:
+                     { $expr:
+                        { $and:
+                           [
+                             { $eq: [ "$dni",  "$$cliente_dni" ] }
+                           ]
+                        }
+                     }
+                  },
+                  { $project: { nombre: 1, dni: 1 , _id:0 } }
+               ],
+              as: "cliente_empleado"
+            }
+       },
+       { $project: { cliente_empleado: {
+        $cond: {
+           if: { $eq: [ [], "$cliente_empleado" ] },
+           then: "$$REMOVE",
+           else: "$cliente_empleado"
+        }} , 
+        _id:0 
+        } },
+        {$group: { _id: "$cliente_empleado.dni" , nombre: { "$first": "$cliente_empleado.nombre" } , dni: { "$first": "$cliente_empleado.dni" } }},
+        { $project: { nombre: {
+            $cond: {
+               if: { $eq: [ null, "$nombre" ] },
+               then: "$$REMOVE",
+               else: "$nombre"
+            }}, dni: {
+                $cond: {
+                   if: { $eq: [ null, "$dni" ] },
+                   then: "$$REMOVE",
+                   else: "$dni"
+                }}, _id:0 } }
+     ]).then(data => {
+        console.log(data)
+        res.send(data.filter((c_e)=> c_e.dni !== undefined));
+    }).catch(err => {
+        res.status(500).send({
+            message:
+                err.message || "Some error occurred while retrieving users."
+        });
+    });
+};
 
 
 

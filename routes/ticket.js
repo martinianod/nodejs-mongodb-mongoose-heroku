@@ -13,6 +13,7 @@ router.get('/desperfectos-por-zona-avellaneda', TicketController.desperfectoPorZ
 router.get('/desperfectos-por-zona-flores', TicketController.desperfectoPorZonaFlores);
 router.get('/clientes-cercanos-zona-flores', TicketController.clientesCercanosZonaFlores);
 router.get('/clientes-cercanos-zona-avellaneda', TicketController.clientesCercanosZonaAvellaneda);
+router.get('/clientes-empleados', TicketController.clienteEmpleado);
 
 //router.post('/', TicketController.create)
 //router.put('/:id', TicketController.update);
